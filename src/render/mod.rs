@@ -1798,26 +1798,29 @@ pub(crate) fn prepare_effects(
     let effects = std::mem::take(&mut extracted_effects.effects);
     let mut effect_entity_list = effects
         .into_iter()
-        .map(|(entity, extracted_effect)| {
-            let id = *effects_meta.entity_map.get(&entity).unwrap();
-            let property_buffer = effects_meta.effect_cache.get_property_buffer(id).cloned(); // clone handle for lifetime
-            let effect_slice = effects_meta.effect_cache.get_slice(id);
+        .filter_map(|(entity, extracted_effect)| {
+            if let Some(id) = effects_meta.entity_map.get(&entity) {
+                let property_buffer = effects_meta.effect_cache.get_property_buffer(*id).cloned(); // clone handle for lifetime
+                let effect_slice = effects_meta.effect_cache.get_slice(*id);
 
-            BatchInput {
-                handle: extracted_effect.handle,
-                entity_index: entity.index(),
-                effect_slice,
-                property_layout: extracted_effect.property_layout.clone(),
-                effect_shader: extracted_effect.effect_shader.clone(),
-                layout_flags: extracted_effect.layout_flags,
-                image_handle: extracted_effect.image_handle,
-                spawn_count: extracted_effect.spawn_count,
-                transform: extracted_effect.transform.into(),
-                inverse_transform: extracted_effect.inverse_transform.into(),
-                property_buffer,
-                property_data: extracted_effect.property_data,
-                #[cfg(feature = "2d")]
-                z_sort_key_2d: extracted_effect.z_sort_key_2d,
+                Some(BatchInput {
+                    handle: extracted_effect.handle,
+                    entity_index: entity.index(),
+                    effect_slice,
+                    property_layout: extracted_effect.property_layout.clone(),
+                    effect_shader: extracted_effect.effect_shader.clone(),
+                    layout_flags: extracted_effect.layout_flags,
+                    image_handle: extracted_effect.image_handle,
+                    spawn_count: extracted_effect.spawn_count,
+                    transform: extracted_effect.transform.into(),
+                    inverse_transform: extracted_effect.inverse_transform.into(),
+                    property_buffer,
+                    property_data: extracted_effect.property_data,
+                    #[cfg(feature = "2d")]
+                    z_sort_key_2d: extracted_effect.z_sort_key_2d,
+                })
+            } else {
+                None
             }
         })
         .collect::<Vec<_>>();
